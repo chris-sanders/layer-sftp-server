@@ -1,0 +1,8 @@
+Match User {{ users }}
+  ForceCommand internal-sftp
+  PasswordAuthentication {{ password_auth }}
+  ChrootDirectory {{ sftp_dir }}/%u
+  PermitTunnel no
+  AllowAgentForwarding no
+  AllowTcpForwarding no
+  X11Forwarding no

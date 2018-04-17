@@ -1,0 +1,17 @@
+options:
+  sftp-config:
+    type: string
+    default: ""
+    description: "user,path:name,path:name;user,path:name,path:name"
+#  sftp-users:
+#    type: string
+#    default: ""
+#    description: "Users to setup"
+#  sftp-paths::
+#    type: string
+#    default: ""
+#    description: "Mounts user,path:name names for each mount is optional"
+  sftp-password-auth:
+    type: boolean
+    default: True
+    description: "Allow password authentication"
