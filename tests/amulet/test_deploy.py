@@ -12,7 +12,7 @@ def deploy():
     deploy.add('sftp-server')
     deploy.expose('sftp-server')
     deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;'
-                                                     'user2,/tmp')})
+                                                     'user2,/opt')})
     deploy.setup(timeout=1000)
     return deploy
 
@@ -30,10 +30,11 @@ class TestHaproxy():
         except amulet.TimeoutError:
             raise
 
-    # def test_web_frontend(self, deploy, duplicati):
-    #     page = requests.get('http://{}:{}'.format(duplicati.info['public-address'], 8200))
-    #     assert page.status_code == 200
-    #     print(page)
+    def test_fstab(self, deploy, sftp):
+        fstab = sftp.file_contents('/etc/fstab')
+        print(fstab)
+        assert '/tmp /var/sftp/user1/system-tmp' in fstab
+        assert '/opt /var/sftp/user2/opt' in fstab
 
     # def test_reverseproxy(self, deploy, duplicati, haproxy):
     #     page = requests.get('http://{}:{}'.format(duplicati.info['public-address'], 8200))

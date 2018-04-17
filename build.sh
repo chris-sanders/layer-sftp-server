@@ -1,2 +1,2 @@
-git describe --tags > ./src/VERSION
-charm build --force
+git describe --tags > ./VERSION
+charm build --force .

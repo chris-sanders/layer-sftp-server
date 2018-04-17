@@ -43,21 +43,11 @@ class SftpHelper:
                                               entry['name']))
             except FileExistsError:
                 pass  # Don't error if directory already exists
-            # shutil.chown('{}/{}/{}'.format(self.sftp_dir,
-            #                                entry['user'],
-            #                                entry['name']),
-            #              user=entry['user'],
-            #              group=entry['user'])
 
     def write_fstab(self):
         for (mnt, dev) in host.mounts():
-            if self.sftp_dir in dev:
+            if self.sftp_dir in mnt:
                 host.umount(mnt, persist=True)
-        # with fileinput.input(self.fstab_file, inplace=True) as fstab:
-        #     for line in fstab:
-        #         if self.sftp_dir in line:
-        #             continue
-        #         print(line, end='')
         for entry in self._get_config():
             host.mount(entry['src'],
                        '{}/{}/{}'.format(self.sftp_dir,
@@ -66,23 +56,12 @@ class SftpHelper:
                        'bind,_netdev,x-systemd.requires={}'.format(self.sftp_dir),
                        persist=True,
                        filesystem="none")
-            shutil.chown('{}/{}/{}'.format(self.sftp_dir,
-                                           entry['user'],
-                                           entry['name']),
-                         user=entry['user'],
-                         group=entry['user'])
-        # with open(self.fstab_file, 'a') as fstab:
-        #     for entry in self._get_config():
-        #         line = ('{}\t'
-        #                 '{}/{}/{}\t'
-        #                 'none bind,_netdev,x-systemd.requires={} 0 0\n'.format(
-        #                     entry['src'],
-        #                     self.sftp_dir,
-        #                     entry['user'],
-        #                     entry['name'],
-        #                     self.sftp_dir)
-        #                 )
-        #         fstab.write(line)
+            if self.charm_config['sftp-chown-mnt']:
+                shutil.chown('{}/{}/{}'.format(self.sftp_dir,
+                                               entry['user'],
+                                               entry['name']),
+                             user=entry['user'],
+                             group=entry['user'])
 
     def write_sshd_config(self):
         # Write the sftp config
