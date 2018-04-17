@@ -5,6 +5,7 @@ import fileinput
 from charmhelpers.core import (
     hookenv,
     templating,
+    host,
 )
 
 
@@ -15,6 +16,7 @@ class SftpHelper:
         self.sshd_file = '/etc/ssh/sshd_config'
         self.sshd_sftp_file = '/etc/ssh/sshd_sftp_config'
         self.fstab_file = '/etc/fstab'
+        self.sshd_comment_line = "# Below this line managed by sftp-server charm do not edit\n"
 
     def _get_config(self):
         results = []
@@ -35,33 +37,52 @@ class SftpHelper:
     def setup_chroot(self):
         config = self._get_config()
         for entry in config:
-            os.makedirs('{}/{}/{}'.format(self.sftp_dir,
-                                          entry['user'],
-                                          entry['name']))
+            try:
+                os.makedirs('{}/{}/{}'.format(self.sftp_dir,
+                                              entry['user'],
+                                              entry['name']))
+            except FileExistsError:
+                pass  # Don't error if directory already exists
+            # shutil.chown('{}/{}/{}'.format(self.sftp_dir,
+            #                                entry['user'],
+            #                                entry['name']),
+            #              user=entry['user'],
+            #              group=entry['user'])
+
+    def write_fstab(self):
+        for (mnt, dev) in host.mounts():
+            if self.sftp_dir in dev:
+                host.umount(mnt, persist=True)
+        # with fileinput.input(self.fstab_file, inplace=True) as fstab:
+        #     for line in fstab:
+        #         if self.sftp_dir in line:
+        #             continue
+        #         print(line, end='')
+        for entry in self._get_config():
+            host.mount(entry['src'],
+                       '{}/{}/{}'.format(self.sftp_dir,
+                                         entry['user'],
+                                         entry['name']),
+                       'bind,_netdev,x-systemd.requires={}'.format(self.sftp_dir),
+                       persist=True,
+                       filesystem="none")
             shutil.chown('{}/{}/{}'.format(self.sftp_dir,
                                            entry['user'],
                                            entry['name']),
                          user=entry['user'],
                          group=entry['user'])
-
-    def write_fstab(self):
-        with fileinput.input(self.fstab_file, inplace=True) as fstab:
-            for line in fstab:
-                if self.sftp_dir in line:
-                    continue
-                print(line, end='')
-        with open(self.fstab_file, 'a') as fstab:
-            for entry in self._get_config():
-                line = ('{}\t'
-                        '{}/{}/{}\t'
-                        'none bind,_netdev,x-systemd.requires={} 0 0\n'.format(
-                            entry['src'],
-                            self.sftp_dir,
-                            entry['user'],
-                            entry['name'],
-                            self.sftp_dir)
-                        )
-                fstab.write(line)
+        # with open(self.fstab_file, 'a') as fstab:
+        #     for entry in self._get_config():
+        #         line = ('{}\t'
+        #                 '{}/{}/{}\t'
+        #                 'none bind,_netdev,x-systemd.requires={} 0 0\n'.format(
+        #                     entry['src'],
+        #                     self.sftp_dir,
+        #                     entry['user'],
+        #                     entry['name'],
+        #                     self.sftp_dir)
+        #                 )
+        #         fstab.write(line)
 
     def write_sshd_config(self):
         # Write the sftp config
@@ -76,14 +97,17 @@ class SftpHelper:
         context = {'sftp_dir': self.sftp_dir,
                    'users': ','.join(users),
                    'password_auth': auth}
-        templating.render('sshd_sftp_config', self.sshd_sftp_file, context, perms=0o664)
+        user_block = templating.render('sshd_sftp_config', None, context)
+        user_block = self.sshd_comment_line + user_block
+        # templating.render('sshd_sftp_config', self.sshd_sftp_file, context, perms=0o664)
 
         # Add an include statement
         with fileinput.input(self.sshd_file, inplace=True) as sshd:
             for line in sshd:
-                if self.sshd_sftp_file in line:
-                    continue
+                if self.sshd_comment_line in line:
+                    break
                 print(line, end='')
         with open(self.sshd_file, 'a') as sshd:
-            line = 'Include {}'.format(self.sshd_sftp_file)
-            sshd.write(line)
+            sshd.write(user_block)
+            # line = 'Include {}'.format(self.sshd_sftp_file)
+            # sshd.write(line)

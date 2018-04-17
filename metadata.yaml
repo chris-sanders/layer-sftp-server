@@ -9,7 +9,7 @@ tags:
   - misc
 subordinate: false
 series:
-  - xenial
+  - artful
 # provides:
 #   provides-relation:
 #     interface: interface-name

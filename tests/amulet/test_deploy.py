@@ -11,7 +11,7 @@ def deploy():
     deploy = amulet.Deployment(series='artful')
     deploy.add('sftp-server')
     deploy.expose('sftp-server')
-    deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp',
+    deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;'
                                                      'user2,/tmp')})
     deploy.setup(timeout=1000)
     return deploy
