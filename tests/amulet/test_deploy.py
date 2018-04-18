@@ -68,11 +68,23 @@ class TestSftp():
                                                          'user3,/mnt'),
                                          'sftp-chown-mnt': False})
 
-        time.sleep(10)
+        time.sleep(5)
         mnt = sftp.directory_stat('/var/sftp/user3/mnt')
         print(mnt)
         assert mnt['uid'] == 0
         assert mnt['gid'] == 0
+
+    def test_ssh_config(self, deploy, sftp):
+        config = sftp.file_contents('/etc/ssh/sshd_config')
+        print(config)
+        assert 'Match User user1,user2,user3' in config
+        deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;'
+                                                         'user2,/opt')})
+        time.sleep(5)
+        config = sftp.file_contents('/etc/ssh/sshd_config')
+        print(config)
+        assert 'Match User user1,user2,user3' not in config
+        assert 'Match User user1,user2' in config
 
     #     # test we can access over http
     #     # page = requests.get('http://{}'.format(self.unit.info['public-address']))
