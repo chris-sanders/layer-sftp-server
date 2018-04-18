@@ -18,9 +18,9 @@ class SftpHelper:
         self.fstab_file = '/etc/fstab'
         self.sshd_comment_line = "# Below this line managed by sftp-server charm do not edit\n"
 
-    def _get_config(self):
+    def parse_config(self):
         results = []
-        for entry in self.charm_config['sftp-config'].split(';'):
+        for entry in self.charm_config['sftp-config'].rstrip('; ').split(';'):
             user = entry.split(',')[0]
             paths = entry.split(',')[1::]
             for path in paths:
@@ -35,7 +35,7 @@ class SftpHelper:
         return results
 
     def setup_chroot(self):
-        config = self._get_config()
+        config = self.parse_config()
         for entry in config:
             try:
                 os.makedirs('{}/{}/{}'.format(self.sftp_dir,
@@ -48,7 +48,7 @@ class SftpHelper:
         for (mnt, dev) in host.mounts():
             if self.sftp_dir in mnt:
                 host.umount(mnt, persist=True)
-        for entry in self._get_config():
+        for entry in self.parse_config():
             host.mount(entry['src'],
                        '{}/{}/{}'.format(self.sftp_dir,
                                          entry['user'],
@@ -66,7 +66,7 @@ class SftpHelper:
     def write_sshd_config(self):
         # Write the sftp config
         users = []
-        for entry in self._get_config():
+        for entry in self.parse_config():
             if entry['user'] not in users:
                 users.append(entry['user'])
         if self.charm_config['sftp-password-auth']:

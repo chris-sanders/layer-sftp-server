@@ -12,9 +12,8 @@ sh = SftpHelper()
 
 @when('config.changed.sftp-config')
 def process_config():
-    for entry in sh.charm_config['sftp-config'].split(';'):
-        user = entry.split(',')[0]
-        host.adduser(user, password=host.pwgen(), shell='/dev/null')
+    for entry in sh.parse_config():
+        host.adduser(entry['user'], password=host.pwgen(), shell='/dev/null')
     sh.setup_chroot()
     sh.write_fstab()
 

@@ -2,8 +2,7 @@
 
 import pytest
 import amulet
-# import requests
-# import time
+import time
 
 
 @pytest.fixture(scope="module")
@@ -22,7 +21,7 @@ def sftp(deploy):
     return deploy.sentry['sftp-server'][0]
 
 
-class TestHaproxy():
+class TestSftp():
 
     def test_deploy(self, deploy):
         try:
@@ -31,20 +30,49 @@ class TestHaproxy():
             raise
 
     def test_fstab(self, deploy, sftp):
+        # Check mounts were added
         fstab = sftp.file_contents('/etc/fstab')
         print(fstab)
         assert '/tmp /var/sftp/user1/system-tmp' in fstab
         assert '/opt /var/sftp/user2/opt' in fstab
 
-    # def test_reverseproxy(self, deploy, duplicati, haproxy):
-    #     page = requests.get('http://{}:{}'.format(duplicati.info['public-address'], 8200))
-    #     assert page.status_code == 200
-    #     # page = requests.get('https://{}:{}/duplicati'.format(haproxy.info['public-address'], 443))
-    #     # assert page.status_code == 503
-    #     deploy.relate('duplicati:reverseproxy', 'haproxy:reverseproxy')
-    #     time.sleep(15)
-    #     page = requests.get('http://{}:{}/duplicati'.format(haproxy.info['public-address'], 80))
-    #     assert page.status_code == 200
+        # Check mounts are removed
+        deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;')})
+        fstab = sftp.file_contents('/etc/fstab')
+        print(fstab)
+        assert '/tmp /var/sftp/user1/system-tmp' in fstab
+        assert '/opt /var/sftp/user2/opt' not in fstab
+
+        # Re-add for other tests
+        deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;'
+                                                         'user2,/opt')})
+
+    def test_chroot_folders(self, deploy, sftp):
+        # Create folderes with chown
+        system_tmp = sftp.directory_stat('/var/sftp/user1/system-tmp')
+        opt = sftp.directory_stat('/var/sftp/user2/opt')
+        with pytest.raises(IOError):
+            fake = sftp.directory_stat('/var/sftp/user1/fake')
+            print(fake)
+
+        print(system_tmp)
+        print(opt)
+        assert system_tmp['uid'] == 1001
+        assert system_tmp['gid'] == 1001
+        assert opt['uid'] == 1002
+        assert opt['gid'] == 1002
+
+        # Create folderes without chown
+        deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;'
+                                                         'user2,/opt;'
+                                                         'user3,/mnt'),
+                                         'sftp-chown-mnt': False})
+
+        time.sleep(10)
+        mnt = sftp.directory_stat('/var/sftp/user3/mnt')
+        print(mnt)
+        assert mnt['uid'] == 0
+        assert mnt['gid'] == 0
 
     #     # test we can access over http
     #     # page = requests.get('http://{}'.format(self.unit.info['public-address']))
