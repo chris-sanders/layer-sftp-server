@@ -1,13 +1,17 @@
-from charms.reactive import when, when_any  # set_state
-from charmhelpers.core import host
+from charms.reactive import when, when_any, when_not, set_state
+from charmhelpers.core import host, hookenv
+from charmhelpers import fetch
 
 from libsftp import SftpHelper
 
 sh = SftpHelper()
 
-# @when_not('sftp-server.installed')
-# def install_sftp_server():
-#     set_state('sftp-server.installed')
+
+@when_not('sftp-server.installed')
+def install_sftp_server():
+    fetch.apt_install('whois')
+    hookenv.status_set('active', 'Sftp-server is ready')
+    set_state('sftp-server.installed')
 
 
 @when('config.changed.sftp-config')

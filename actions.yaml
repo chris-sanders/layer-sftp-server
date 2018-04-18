@@ -1,0 +1,27 @@
+add-key:
+  description: Append a public key to a user
+  params:
+    user:
+      type: string
+      description: user to append the key to
+    key:
+      type: string
+      description: key to append
+set-key:
+  description: Set the key for a user (single key)
+  params:
+    user:
+      type: string
+      description: user to add the key to
+    key:
+      type: string
+      description: key to set
+set-password:
+  description: Set a users password
+  params:
+    user:
+      type: string
+      description: user to set the password
+    password:
+      type: string
+      description: password to set

@@ -1,6 +1,7 @@
 import os
 import shutil
 import fileinput
+import subprocess
 
 from charmhelpers.core import (
     hookenv,
@@ -78,7 +79,6 @@ class SftpHelper:
                    'password_auth': auth}
         user_block = templating.render('sshd_sftp_config', None, context)
         user_block = self.sshd_comment_line + user_block
-        # templating.render('sshd_sftp_config', self.sshd_sftp_file, context, perms=0o664)
 
         # Add an include statement
         with fileinput.input(self.sshd_file, inplace=True) as sshd:
@@ -88,5 +88,27 @@ class SftpHelper:
                 print(line, end='')
         with open(self.sshd_file, 'a') as sshd:
             sshd.write(user_block)
-            # line = 'Include {}'.format(self.sshd_sftp_file)
-            # sshd.write(line)
+
+    def set_password(self, user, password):
+        p = subprocess.Popen(('mkpasswd', '-m', 'sha-512', password), stdout=subprocess.PIPE)
+        shadow_password = p.communicate()[0].strip()
+        subprocess.check_call(('usermod', '-p', shadow_password, user))
+
+    def add_key(self, user, key):
+        try:
+            os.makedirs('/home/{}/.ssh/'.format(user))
+        except FileExistsError:
+            pass  # Don't error if directory already exists
+
+        with open('/home/{}/.ssh/authorized_keys'.format(user), 'a') as keys:
+            keys.write(key + '\n')
+
+    def set_key(self, user, key):
+        try:
+            os.makedirs('/home/{}/.ssh/'.format(user))
+        except FileExistsError:
+            pass  # Don't error if directory already exists
+
+        with open('/home/{}/.ssh/authorized_keys'.format(user), 'w') as keys:
+            keys.write(key)
+

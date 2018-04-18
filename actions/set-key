@@ -1,0 +1,12 @@
+#!/usr/local/sbin/charm-env python3
+
+from charmhelpers.core import hookenv
+import sys
+sys.path.append(hookenv.charm_dir())
+sys.path.append(hookenv.charm_dir() + '/lib')
+
+from libsftp import SftpHelper
+
+sh = SftpHelper()
+sh.set_key(hookenv.action_get('user'), hookenv.action_get('key'))
+

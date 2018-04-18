@@ -52,8 +52,7 @@ class TestSftp():
         system_tmp = sftp.directory_stat('/var/sftp/user1/system-tmp')
         opt = sftp.directory_stat('/var/sftp/user2/opt')
         with pytest.raises(IOError):
-            fake = sftp.directory_stat('/var/sftp/user1/fake')
-            print(fake)
+            sftp.directory_stat('/var/sftp/user1/fake')
 
         print(system_tmp)
         print(opt)
@@ -85,6 +84,22 @@ class TestSftp():
         print(config)
         assert 'Match User user1,user2,user3' not in config
         assert 'Match User user1,user2' in config
+
+    def test_actions(self, deploy, sftp):
+        uuid = sftp.action_do('set-password', {'user': 'user1', 'password': 'amulet'})
+        result = deploy.action_fetch(uuid, full_output=True)
+        print(result)
+        assert result['status'] == 'completed'
+
+        uuid = sftp.action_do('set-key', {'user': 'user1', 'key': 'test_key'})
+        result = deploy.action_fetch(uuid, full_output=True)
+        print(result)
+        assert result['status'] == 'completed'
+
+        uuid = sftp.action_do('add-key', {'user': 'user1', 'key': 'test_key2'})
+        result = deploy.action_fetch(uuid, full_output=True)
+        print(result)
+        assert result['status'] == 'completed'
 
     #     # test we can access over http
     #     # page = requests.get('http://{}'.format(self.unit.info['public-address']))
