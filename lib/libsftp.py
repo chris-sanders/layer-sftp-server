@@ -58,11 +58,15 @@ class SftpHelper:
                        persist=True,
                        filesystem="none")
             if self.charm_config['sftp-chown-mnt']:
-                shutil.chown('{}/{}/{}'.format(self.sftp_dir,
-                                               entry['user'],
-                                               entry['name']),
-                             user=entry['user'],
-                             group=entry['user'])
+                try:
+                    shutil.chown('{}/{}/{}'.format(self.sftp_dir,
+                                                   entry['user'],
+                                                   entry['name']),
+                                 user=entry['user'],
+                                 group=entry['user'])
+                except Exception as e:
+                    hookenv.log("Chown failed: {}".format(e),
+                                level=hookenv.WARNING)
 
     def write_sshd_config(self):
         # Write the sftp config

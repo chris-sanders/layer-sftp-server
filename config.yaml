@@ -6,7 +6,7 @@ options:
   sftp-chown-mnt:
     type: boolean
     default: True
-    description: "Chown to the user after mounting into the chroot"
+    description: "Attempt to chown to the user after mounting into the chroot"
   sftp-password-auth:
     type: boolean
     default: True
