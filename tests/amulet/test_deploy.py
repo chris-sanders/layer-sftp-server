@@ -11,7 +11,7 @@ def deploy():
     deploy.add('sftp-server')
     deploy.expose('sftp-server')
     deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;'
-                                                     'user2,/opt')})
+                                                     ' user2,/opt')})
     deploy.setup(timeout=1000)
     return deploy
 

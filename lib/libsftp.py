@@ -22,7 +22,7 @@ class SftpHelper:
     def parse_config(self):
         results = []
         for entry in self.charm_config['sftp-config'].rstrip('; ').split(';'):
-            user = entry.split(',')[0]
+            user = entry.split(',')[0].lstrip(' ')
             paths = entry.split(',')[1::]
             for path in paths:
                 src = path.split(':')[0]
