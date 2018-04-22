@@ -7,7 +7,7 @@ import time
 
 @pytest.fixture(scope="module")
 def deploy():
-    deploy = amulet.Deployment(series='artful')
+    deploy = amulet.Deployment(series='xenial')
     deploy.add('sftp-server')
     deploy.expose('sftp-server')
     deploy.configure('sftp-server', {'sftp-config': ('user1,/tmp:system-tmp;'
