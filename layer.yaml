@@ -1,3 +1,12 @@
-includes: ['layer:basic', 'layer:version']  # if you use any interfaces, add them here
+# exclude the interfaces and layers folders we use for submodules
+exclude:
+  - interfaces
+  - layers
+# include required layers here
+includes:
+  - layer:basic
+  - layer:version
+options:
+    version:
+        file_name: "repo-info"
 repo: git@github.com:chris-sanders/layer-sftp-server.git
-

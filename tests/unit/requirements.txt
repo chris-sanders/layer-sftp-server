@@ -1,4 +1,5 @@
 charmhelpers
 charms.reactive
-pytest
 mock
+pytest
+pytest-cov
