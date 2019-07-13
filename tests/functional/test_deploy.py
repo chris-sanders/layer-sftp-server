@@ -10,12 +10,12 @@ pytestmark = pytest.mark.asyncio
 juju_repository = os.getenv("JUJU_REPOSITORY", ".").rstrip("/")
 series = [
     "xenial",
-    pytest.param("bionic", marks=pytest.mark.xfail(reason="canary")),
-    # pytest.param('cosmic', marks=pytest.mark.xfail(reason='canary')),
+    "bionic",
+    pytest.param("cosmic", marks=pytest.mark.xfail(reason="canary")),
 ]
 sources = [
     ("local", "{}/builds/sftp-server".format(juju_repository)),
-    # ('jujucharms', 'cs:...'),
+    # ("jujucharms", "cs:~chris.sanders/sftp-server"),
 ]
 
 
@@ -36,6 +36,7 @@ async def app(model, series, source):
     return await model._wait_for_new("application", app_name)
 
 
+@pytest.mark.deploy
 async def test_sftpserver_deploy(model, series, source, request):
     # Starts a deploy for each series
     # Using subprocess b/c libjuju fails with JAAS
@@ -58,6 +59,15 @@ async def test_sftpserver_deploy(model, series, source, request):
     subprocess.check_call(cmd)
 
 
+@pytest.mark.deploy
+async def test_install_config(app):
+    await app.set_config({"system-gidmap": "sftp=1100", "system-uidmap": "sftp=1100"})
+    config = await app.get_config()
+    assert config["system-gidmap"]["value"] == "sftp=1100"
+    assert config["system-uidmap"]["value"] == "sftp=1100"
+
+
+@pytest.mark.deploy
 async def test_charm_upgrade(model, app):
     if app.name.endswith("local"):
         pytest.skip("No need to upgrade the local deploy")
@@ -118,10 +128,10 @@ async def test_chroot_folders(app, jujutools):
         fail = await jujutools.file_stat("/var/sftp/user1/fake", app.units[0])
         print(fail)
 
-    assert system_tmp.st_uid == 1001
-    assert system_tmp.st_gid == 1001
-    assert opt.st_uid == 1002
-    assert opt.st_gid == 1002
+    assert system_tmp.st_uid == 1101
+    assert system_tmp.st_gid == 1101
+    assert opt.st_uid == 1102
+    assert opt.st_gid == 1102
 
     # Create folderes without chown
     await app.set_config(
@@ -139,8 +149,8 @@ async def test_chroot_folders(app, jujutools):
     # time.sleep(5)
     mnt = await jujutools.file_stat("/var/sftp/user3/mnt", app.units[0])
     print(mnt)
-    assert mnt.st_uid == 0
-    assert mnt.st_gid == 0
+    assert mnt.st_uid == 1100
+    assert mnt.st_gid == 1100
 
 
 async def test_ssh_config(app, jujutools):

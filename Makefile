@@ -19,7 +19,7 @@ lint:
 	@echo "Running flake8"
 	@tox -e lint
 
-test: unittest functional lint
+test: unittest functional # lint
 
 unittest:
 	@tox -e unit
@@ -31,12 +31,18 @@ ifeq ($(PYTEST_SELECT_TESTS),)
 	    PYTEST_CLOUD_REGION=$(PYTEST_CLOUD_REGION) \
 	    PYTEST_MODEL=$(PYTEST_MODEL) \
 	    tox -e functional
+else ifeq ($(PYTEST_SELECT_MARKS),)
+	@PYTEST_KEEP_MODEL=$(PYTEST_KEEP_MODEL) \
+	    PYTEST_CLOUD_NAME=$(PYTEST_CLOUD_NAME) \
+	    PYTEST_CLOUD_REGION=$(PYTEST_CLOUD_REGION) \
+	    PYTEST_MODEL=$(PYTEST_MODEL) \
+	    PYTEST_SELECT_MARKS=$(PYTEST_SELECT_MARKS) \
+	    tox -e functional
 else
 	@PYTEST_KEEP_MODEL=$(PYTEST_KEEP_MODEL) \
 	    PYTEST_CLOUD_NAME=$(PYTEST_CLOUD_NAME) \
 	    PYTEST_CLOUD_REGION=$(PYTEST_CLOUD_REGION) \
 	    PYTEST_MODEL=$(PYTEST_MODEL) \
-	    PYTEST_SELECT_TESTS=$(PYTEST_SELECT_TESTS) \
 	    tox -e functional
 endif
 

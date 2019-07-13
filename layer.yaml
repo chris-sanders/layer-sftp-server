@@ -6,7 +6,15 @@ exclude:
 includes:
   - layer:basic
   - layer:version
+  - layer:service-account
 options:
     version:
         file_name: "repo-info"
+    service-account:
+        users:
+          - 'sftp'
+        groups:
+          - 'sftp'
+        membership:
+          - 'sftp': ['sftp']
 repo: git@github.com:chris-sanders/layer-sftp-server.git
